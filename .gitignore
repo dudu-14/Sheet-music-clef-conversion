@@ -155,3 +155,30 @@ temp/
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Build files (temporary)
+build/
+dist/
+*.spec
+
+# Compiled executables in release directories
+release/*/ClefConverter.exe
+release/*/ClefConverter_Portable/
+release/*/ClefConverter_*/
+release/*/*.msi
+release/*/*.dmg
+release/*/*.app
+release/*/*.deb
+release/*/*.rpm
+
+# But allow release structure and tools
+!release/
+!release/README.md
+!release/*/
+!release/*/README.md
+!release/release_files/
+!release/release_files/*
+
+# Backup files
+*.backup
+*.orig
