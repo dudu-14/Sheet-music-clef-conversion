@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}谱号转换器 - 中音谱号转高音谱号{% endblock %}
+
+{% block content %}
+<!-- 页面标题 -->
+<div class="row mb-4">
+    <div class="col-12 text-center">
+        <h1 class="display-4">
+            <i class="fas fa-music text-primary me-3"></i>
+            谱号转换器
+        </h1>
+        <p class="lead text-muted">
+            智能识别中音谱号乐谱，自动转换为高音谱号格式
+        </p>
+    </div>
+</div>
+
+<!-- 主要功能区域 -->
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <!-- 文件上传区域 -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-upload me-2"></i>上传乐谱图片
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="uploadArea" class="upload-area text-center p-5 border-2 border-dashed rounded">
+                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                    <h5>拖拽图片到此处或点击选择文件</h5>
+                    <p class="text-muted">
+                        支持 PNG, JPG, BMP, TIFF 格式，最大 100MB
+                    </p>
+                    <input type="file" id="fileInput" class="d-none" accept="image/*">
+                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                        <i class="fas fa-folder-open me-2"></i>选择文件
+                    </button>
+                </div>
+                
+                <!-- 文件信息显示 -->
+                <div id="fileInfo" class="mt-3 d-none">
+                    <div class="alert alert-info">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h6 class="mb-1">
+                                    <i class="fas fa-file-image me-2"></i>
+                                    <span id="fileName"></span>
+                                </h6>
+                                <small class="text-muted">
+                                    文件大小: <span id="fileSize"></span>
+                                </small>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <button type="button" class="btn btn-sm btn-outline-danger" onclick="clearFile()">
+                                    <i class="fas fa-times me-1"></i>移除
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 处理选项 -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-cogs me-2"></i>处理选项
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="highQuality">
+                            <label class="form-check-label" for="highQuality">
+                                <strong>高精度模式</strong>
+                                <br><small class="text-muted">提高识别准确率，但处理时间更长</small>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">输出格式</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="formatPng" checked>
+                            <label class="form-check-label" for="formatPng">PNG 图片</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="formatPdf">
+                            <label class="form-check-label" for="formatPdf">PDF 文档</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="formatMidi">
+                            <label class="form-check-label" for="formatMidi">MIDI 音频</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 开始转换按钮 -->
+        <div class="text-center mb-4">
+            <button id="convertBtn" class="btn btn-primary btn-lg px-5" disabled onclick="startConversion()">
+                <i class="fas fa-magic me-2"></i>开始转换
+            </button>
+        </div>
+
+        <!-- 进度显示 -->
+        <div id="progressSection" class="card shadow-sm mb-4 d-none">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-tasks me-2"></i>处理进度
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="progress mb-3" style="height: 25px;">
+                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" 
+                         role="progressbar" style="width: 0%">
+                        <span id="progressText">0%</span>
+                    </div>
+                </div>
+                <p id="progressMessage" class="text-muted mb-0">准备开始...</p>
+            </div>
+        </div>
+
+        <!-- 结果显示 -->
+        <div id="resultSection" class="card shadow-sm d-none">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-check-circle me-2"></i>转换完成
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>处理统计</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-music me-2 text-primary"></i>识别音符: <span id="notesCount">0</span> 个</li>
+                            <li><i class="fas fa-clock me-2 text-primary"></i>处理时间: <span id="processingTime">0</span> 秒</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>下载文件</h6>
+                        <div id="downloadLinks">
+                            <!-- 下载链接将在这里动态生成 -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-3">
+                    <button type="button" class="btn btn-outline-primary" onclick="resetForm()">
+                        <i class="fas fa-redo me-2"></i>转换新文件
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 错误显示 -->
+        <div id="errorSection" class="card shadow-sm border-danger d-none">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle me-2"></i>转换失败
+                </h5>
+            </div>
+            <div class="card-body">
+                <p id="errorMessage" class="text-danger mb-3"></p>
+                <button type="button" class="btn btn-outline-primary" onclick="resetForm()">
+                    <i class="fas fa-redo me-2"></i>重新尝试
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 功能介绍 -->
+<div class="row mt-5">
+    <div class="col-12">
+        <h2 class="text-center mb-4">功能特点</h2>
+    </div>
+    <div class="col-md-3 text-center mb-4">
+        <div class="card h-100 border-0">
+            <div class="card-body">
+                <i class="fas fa-eye fa-3x text-primary mb-3"></i>
+                <h5>智能识别</h5>
+                <p class="text-muted">
+                    使用先进的光学音乐识别技术，准确识别乐谱中的音符和符号
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 text-center mb-4">
+        <div class="card h-100 border-0">
+            <div class="card-body">
+                <i class="fas fa-exchange-alt fa-3x text-primary mb-3"></i>
+                <h5>自动转换</h5>
+                <p class="text-muted">
+                    自动将中音谱号转换为高音谱号，保持音高不变
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 text-center mb-4">
+        <div class="card h-100 border-0">
+            <div class="card-body">
+                <i class="fas fa-file-export fa-3x text-primary mb-3"></i>
+                <h5>多格式输出</h5>
+                <p class="text-muted">
+                    支持PNG图片、PDF文档、MIDI音频等多种输出格式
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 text-center mb-4">
+        <div class="card h-100 border-0">
+            <div class="card-body">
+                <i class="fas fa-bolt fa-3x text-primary mb-3"></i>
+                <h5>快速处理</h5>
+                <p class="text-muted">
+                    优化的算法确保快速处理，大多数文件在几秒内完成
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+<script src="{{ url_for('static', filename='js/converter.js') }}"></script>
+{% endblock %}
